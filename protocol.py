@@ -1,113 +1,27 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# protocol.py - decode binary messages received from WeeChat/relay
-#
-# Copyright (C) 2011-2014 Sébastien Helleu <flashcode@flashtux.org>
-#
-# This file is part of QWeeChat, a Qt remote GUI for WeeChat.
-#
-# QWeeChat is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# QWeeChat is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with QWeeChat.  If not, see <http://www.gnu.org/licenses/>.
-#
-
+# protocol.py - handles decoding of binary data and the associated object equivalents
 #
 # For info about protocol and format of messages, please read document
 # "WeeChat Relay Protocol", available at:  http://weechat.org/doc/
 #
 # History:
 #
-# 2011-11-23, Sébastien Helleu <flashcode@flashtux.org>:
-#     start dev
+# 2014-05-03, Jacob Melton:
+#     initial development
 #
 
-import collections, struct, zlib
-
-if hasattr(collections, 'OrderedDict'):
-    # python >= 2.7
-    class WeechatDict(collections.OrderedDict):
-        def __str__(self):
-            return '{%s}' % ', '.join(['%s: %s' % (repr(key), repr(self[key])) for key in self])
-else:
-    # python <= 2.6
-    WeechatDict = dict
-
-class WeechatObject:
-    def __init__(self, objtype, value, separator='\n'):
-        self.objtype = objtype;
-        self.value = value
-        self.separator = separator
-        self.indent = '  ' if separator == '\n' else ''
-        self.separator1 = '\n%s' % self.indent if separator == '\n' else ''
-
-    def _str_value(self, v):
-        if type(v) is str and not v is None:
-            return '\'%s\'' % v
-        return str(v)
-
-    def _str_value_hdata(self):
-        lines = ['%skeys: %s%s%spath: %s' % (self.separator1, str(self.value['keys']), self.separator, self.indent, str(self.value['path']))]
-        for i, item in enumerate(self.value['items']):
-            lines.append('  item %d:%s%s' % ((i + 1), self.separator,
-                                             self.separator.join(['%s%s: %s' % (self.indent * 2, key, self._str_value(value)) for key, value in item.items()])))
-        return '\n'.join(lines)
-
-    def _str_value_infolist(self):
-        lines = ['%sname: %s' % (self.separator1, self.value['name'])]
-        for i, item in enumerate(self.value['items']):
-            lines.append('  item %d:%s%s' % ((i + 1), self.separator,
-                                             self.separator.join(['%s%s: %s' % (self.indent * 2, key, self._str_value(value)) for key, value in item.items()])))
-        return '\n'.join(lines)
-
-    def _str_value_other(self):
-        return self._str_value(self.value)
-
-    def __str__(self):
-        self._obj_cb = {'hda': self._str_value_hdata,
-                        'inl': self._str_value_infolist,
-                        }
-        return '%s: %s' % (self.objtype, self._obj_cb.get(self.objtype, self._str_value_other)())
-
-
-class WeechatObjects(list):
-    def __init__(self, separator='\n'):
-        self.separator = separator
-
-    def __str__(self):
-        return self.separator.join([str(obj) for obj in self])
-
-
-class WeechatMessage:
-    def __init__(self, size, size_uncompressed, compression, uncompressed, msgid, objects):
-        self.size = size
-        self.size_uncompressed = size_uncompressed
-        self.compression = compression
-        self.uncompressed = uncompressed
-        self.msgid = msgid
-        self.objects = objects
-
-    def __str__(self):
-        if self.compression != 0:
-            return 'size: %d/%d (%d%%), id=\'%s\', objects:\n%s' % (
-                self.size, self.size_uncompressed,
-                100 - ((self.size * 100) // self.size_uncompressed),
-                self.msgid, self.objects)
-        else:
-            return 'size: %d, id=\'%s\', objects:\n%s' % (self.size, self.msgid, self.objects)
-
+import struct
+import zlib
+import collections
 
 class Protocol:
-    """Decode binary message received from WeeChat/relay."""
+    """
+    Decode binary message received from WeeChat/relay.
+    Returns a WeechatMessage which contains a list of
+    all the WeehchatObject variables sent by the relay
+    """
 
     def __init__(self):
         self._obj_cb = {'chr': self._obj_char,
@@ -129,7 +43,7 @@ class Protocol:
         if len(self.data) < 3:
             self.data = ''
             return ''
-        objtype = str(self.data[0:3])
+        objtype = self.data[0:3].decode()
         self.data = self.data[3:]
         return objtype
 
@@ -174,14 +88,14 @@ class Protocol:
         value = self._obj_len_data(1)
         if value is None:
             return None
-        return int(str(value))
+        return int(value.decode())
 
     def _obj_str(self):
         """Read a string in data (length on 4 bytes + content)."""
         value = self._obj_len_data(4)
         if value is None:
             return None
-        return str(value)
+        return value.decode()
 
     def _obj_buffer(self):
         """Read a buffer in data (length on 4 bytes + data)."""
@@ -192,14 +106,14 @@ class Protocol:
         value = self._obj_len_data(1)
         if value is None:
             return None
-        return '0x%s' % str(value)
+        return '0x%s' % value.decode()
 
     def _obj_time(self):
         """Read a time in data (length on 1 byte + value as string)."""
         value = self._obj_len_data(1)
         if value is None:
             return None
-        return int(str(value))
+        return int(value.decode())
 
     def _obj_hashtable(self):
         """Read a hashtable in data (type for keys + type for values + count + items)."""
@@ -303,23 +217,75 @@ class Protocol:
             objects.append(WeechatObject(objtype, value, separator=separator))
         return WeechatMessage(size, size_uncompressed, compression, uncompressed, msgid, objects)
 
+class WeechatObject:
+    """
+    defines an object from the relay
+    each object has a type and a value as defined in the protocol spec
+    """
+    def __init__(self, objtype, value, separator='\n'):
+        self.objtype = objtype;
+        self.value = value
+        self.separator = separator
+        self.indent = '  ' if separator == '\n' else ''
+        self.separator1 = '\n%s' % self.indent if separator == '\n' else ''
 
-def hex_and_ascii(data, bytes_per_line=10):
-    """Convert a QByteArray to hex + ascii output."""
-    num_lines = ((len(data) - 1) // bytes_per_line) + 1
-    if num_lines == 0:
-        return ''
-    lines = []
-    for i in range(0, num_lines):
-        str_hex = []
-        str_ascii = []
-        for char in data[i*bytes_per_line:(i*bytes_per_line)+bytes_per_line]:
-            byte = struct.unpack('B', char)[0]
-            str_hex.append('%02X' % int(byte))
-            if byte >= 32 and byte <= 127:
-                str_ascii.append(char)
-            else:
-                str_ascii.append('.')
-        fmt = '%%-%ds %%s' % ((bytes_per_line * 3) - 1)
-        lines.append(fmt % (' '.join(str_hex), ''.join(str_ascii)))
-    return '\n'.join(lines)
+    def _str_value(self, v):
+        if type(v) is str and not v is None:
+            return '\'%s\'' % v
+        return str(v)
+
+    def _str_value_hdata(self):
+        lines = ['%skeys: %s%s%spath: %s' % (self.separator1, self.value['keys'].decode(), self.separator, self.indent, self.value['path'].decode())]
+        for i, item in enumerate(self.value['items']):
+            lines.append('  item %d:%s%s' % ((i + 1), self.separator,
+                                             self.separator.join(['%s%s: %s' % (self.indent * 2, key, self._str_value(value)) for key, value in item.items()])))
+        return '\n'.join(lines)
+
+    def _str_value_infolist(self):
+        lines = ['%sname: %s' % (self.separator1, self.value['name'])]
+        for i, item in enumerate(self.value['items']):
+            lines.append('  item %d:%s%s' % ((i + 1), self.separator,
+                                             self.separator.join(['%s%s: %s' % (self.indent * 2, key, self._str_value(value)) for key, value in item.items()])))
+        return '\n'.join(lines)
+
+    def _str_value_other(self):
+        return self._str_value(self.value)
+
+    def __str__(self):
+        self._obj_cb = {'hda': self._str_value_hdata,
+                        'inl': self._str_value_infolist,
+                        }
+        return '%s: %s' % (self.objtype, self._obj_cb.get(self.objtype, self._str_value_other)())
+
+class WeechatObjects(list):
+    """
+    essentially a list of WeechatObject variables
+    """
+    def __init__(self, separator='\n'):
+        self.separator = separator
+
+    def __str__(self):
+        return self.separator.join([str(weechat_obj) for weechat_obj in self])
+
+class WeechatMessage:
+    """
+    defines a message from the relay
+    key property is objects which is a WeehchatObjects object
+    objects is essentially a list of WeechatObject variables
+    """
+    def __init__(self, size, size_uncompressed, compression, uncompressed, msgid, objects):
+        self.size = size
+        self.size_uncompressed = size_uncompressed
+        self.compression = compression
+        self.uncompressed = uncompressed
+        self.msgid = msgid
+        self.objects = objects
+
+    def __str__(self):
+        if self.compression != 0:
+            return 'size: %d/%d (%d%%), id=\'%s\', objects:\n%s' % (
+                self.size, self.size_uncompressed,
+                100 - ((self.size * 100) // self.size_uncompressed),
+                self.msgid, self.objects)
+        else:
+            return 'size: %d, id=\'%s\', objects:\n%s' % (self.size, self.msgid, self.objects)

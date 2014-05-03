@@ -42,20 +42,18 @@ class WeechatRelay:
 		"""
 		send a message on the socket
 		"""
+		message += '\n'
 		try:
 			self.sock.send(message.encode())
 		except:
-			traceback.print_exc()
 			print("Unable to send on the socket, has init been run?")
 
 	def recieve(self):
 		try:
 			buf = self.sock.recv(4096)
 		except:
-			traceback.print_exc()
 			print("Unable to recieve on the socket, has init been run?")
 		if buf:
-			recvbuf += buf
-			message = self.proto.decode(recvbuf)
+			message = self.proto.decode(buf)
 
 		return message
