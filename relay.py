@@ -12,6 +12,7 @@
 #     initial development
 #
 import ssl
+import struct
 import socket
 import protocol
 
@@ -49,11 +50,25 @@ class WeechatRelay:
 			print("Unable to send on the socket, has init been run?")
 
 	def recieve(self):
+		recvbuf = b''
 		try:
 			buf = self.sock.recv(4096)
+			if buf:
+				recvbuf += buf
+				while len(recvbuf) >= 4:
+					remainder = None
+					length = struct.unpack('>i', buf[0:4])[0]
+					if len(recvbuf) < length:
+						break
+					if length < len(recvbuf):
+						remainder = recvbuf[length:]
+						recvbuf = recvbuf[0:length]
+					if remainder:
+						recvbuf = remainder
+					else:
+						break
 		except:
 			print("Unable to recieve on the socket, has init been run?")
-		if buf:
-			message = self.proto.decode(buf)
-
+		
+		message = self.proto.decode(recvbuf)
 		return message
