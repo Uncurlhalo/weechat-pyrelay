@@ -33,7 +33,7 @@ extern "C"
     {
         std::string ret = self->send_msg(message);
         char* array = new char[ret.size()+1];
-        strcpy(array, ret.c_str());
+        strncpy(array, ret.c_str(), ret.size() + 1);
         return array;
     }
 
