@@ -15,6 +15,18 @@
 import struct
 import zlib
 import collections
+"""
+if hasattr(collections, 'OrderedDict'):
+    # python >= 2.7
+    class WeechatDict(collections.OrderedDict):
+        def __str__(self):
+            return '{%s}' % ', '.join(['%s: %s' % (repr(key), repr(self[key])) for key in self])
+else:
+    # python <= 2.6
+    WeechatDict = dict
+"""
+
+WeechatDict = dict
 
 class Protocol:
     """
@@ -77,7 +89,7 @@ class Protocol:
     def _obj_int(self):
         """Read an integer in data (4 bytes)."""
         if len(self.data) < 4:
-            self.data = ''
+            self.data = b''
             return 0
         value = struct.unpack('>i', self.data[0:4])[0]
         self.data = self.data[4:]
@@ -88,14 +100,17 @@ class Protocol:
         value = self._obj_len_data(1)
         if value is None:
             return None
-        return int(value.decode())
+        return int(value)
 
     def _obj_str(self):
         """Read a string in data (length on 4 bytes + content)."""
         value = self._obj_len_data(4)
         if value is None:
             return None
-        return value.decode()
+        if isinstance(value, str):
+            return value
+        else:
+            return value.decode()
 
     def _obj_buffer(self):
         """Read a buffer in data (length on 4 bytes + data)."""
@@ -113,7 +128,7 @@ class Protocol:
         value = self._obj_len_data(1)
         if value is None:
             return None
-        return int(value.decode())
+        return int(value)
 
     def _obj_hashtable(self):
         """Read a hashtable in data (type for keys + type for values + count + items)."""
@@ -198,8 +213,10 @@ class Protocol:
         compression = struct.unpack('b', self.data[4:5])[0]
         if compression:
             uncompressed = zlib.decompress(self.data[5:])
-            size_uncompressed = len(uncompressed) + 5
-            uncompressed = '%s%s%s' % (struct.pack('>i', size_uncompressed), struct.pack('b', 0), uncompressed)
+            opt1 = struct.pack('>i', len(uncompressed) + 5)
+            opt2 = struct.pack('b', 0)
+            opt3 = uncompressed
+            uncompressed = opt1 + opt2 + opt3
             self.data = uncompressed
         else:
             uncompressed = self.data[:]
@@ -235,7 +252,7 @@ class WeechatObject:
         return str(v)
 
     def _str_value_hdata(self):
-        lines = ['%skeys: %s%s%spath: %s' % (self.separator1, self.value['keys'].decode(), self.separator, self.indent, self.value['path'].decode())]
+        lines = ['%skeys: %s%s%spath: %s' % (self.separator1, self.value['keys'], self.separator, self.indent, self.value['path'])]
         for i, item in enumerate(self.value['items']):
             lines.append('  item %d:%s%s' % ((i + 1), self.separator,
                                              self.separator.join(['%s%s: %s' % (self.indent * 2, key, self._str_value(value)) for key, value in item.items()])))

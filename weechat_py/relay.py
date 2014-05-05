@@ -17,15 +17,18 @@ import socket
 import protocol
 
 class WeechatRelay:
-	def __init__(self, host, port, inet=socket.AF_INET, sslenable=False):
+	def __init__(self, host, port, inet=False, doSSL=False):
 		self.host = host
 		self.port = port
-		self.inet = inet
-		self.sslenable = sslenable
+		if inet:
+			self.inet = socket.AF_INET6
+		else:
+			self.inet = socket.AF_INET
+		self.doSSL = doSSL
 		self.proto = protocol.Protocol()
 		self.sock = socket.socket(self.inet, socket.SOCK_STREAM)
 
-		if sslenable:
+		if doSSL:
 			self.sock = ssl.wrap_socket(self.sock)
 
 	def init(self, password):
@@ -50,25 +53,13 @@ class WeechatRelay:
 			print("Unable to send on the socket, has init been run?")
 
 	def recieve(self):
-		recvbuf = b''
-		try:
-			buf = self.sock.recv(4096)
-			if buf:
-				recvbuf += buf
-				while len(recvbuf) >= 4:
-					remainder = None
-					length = struct.unpack('>i', buf[0:4])[0]
-					if len(recvbuf) < length:
-						break
-					if length < len(recvbuf):
-						remainder = recvbuf[length:]
-						recvbuf = recvbuf[0:length]
-					if remainder:
-						recvbuf = remainder
-					else:
-						break
-		except:
-			print("Unable to recieve on the socket, has init been run?")
-		
-		message = self.proto.decode(recvbuf)
+		buf = b''
+		#try:
+		buf = self.sock.recv(4)
+		length = struct.unpack('>i', buf[0:4])[0]
+		buf += self.sock.recv(length-4)
+		#except:
+		#	print("Unable to recieve on the socket, has init been run?")
+
+		message = self.proto.decode(buf)
 		return message
