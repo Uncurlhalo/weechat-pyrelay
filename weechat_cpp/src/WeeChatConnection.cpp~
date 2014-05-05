@@ -46,11 +46,13 @@ void WeeChatConnection::init(std::string password)
     } 
 }
 
-void WeeChatConnection::send_msg(std::string message)
+std::string WeeChatConnection::send_msg(std::string message)
 {
     std::string message_string = message + "\n";
     if (send(this->sockfd, message_string.c_str(), message_string.size(), 0) != message_string.size())
     {
-        throw CommunicationException(std::string("Could not send message ") + message);
-    }   
+        throw CommunicationException("Could not send message " + message);
+    }
+    return "lel";
 }
+
