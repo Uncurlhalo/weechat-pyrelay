@@ -1,3 +1,6 @@
+import relay
+import color
+
 class WeechatBuffer():
 	def __init__(self, path, name):
 		self.lines = []
