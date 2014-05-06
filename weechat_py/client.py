@@ -17,9 +17,12 @@ myRelay.init(args.password)
 
 myRelay.send('(listbuffers) hdata buffer:gui_buffers(*) number,full_name,short_name,type,nicklist,title,local_variables')
 buffer_list = myRelay.recieve()
+buffer_list = buffer_list.objects[0]
 myRelay.send('(listlines) hdata buffer:gui_buffers(*)/own_lines/last_line(-50)/data date,displayed,prefix,message')
 lines = myRelay.recieve()
+lines = lines.objects[0]
 myRelay.send('(nicklist) nicklist')
 nicklist = myRelay.recieve()
+nicklist =  nicklist.objects[0]
 myRelay.send('sync')
 

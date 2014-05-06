@@ -95,6 +95,9 @@ class Protocol:
         value = self._obj_len_data(4)
         if value is None:
             return None
+
+        # Should look at doing color code removal here
+        # refernce color.py for guidance
         if isinstance(value, str):
             return value
         else:
