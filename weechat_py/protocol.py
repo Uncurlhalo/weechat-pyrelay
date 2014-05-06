@@ -15,18 +15,6 @@
 import struct
 import zlib
 import collections
-"""
-if hasattr(collections, 'OrderedDict'):
-    # python >= 2.7
-    class WeechatDict(collections.OrderedDict):
-        def __str__(self):
-            return '{%s}' % ', '.join(['%s: %s' % (repr(key), repr(self[key])) for key in self])
-else:
-    # python <= 2.6
-    WeechatDict = dict
-"""
-
-WeechatDict = dict
 
 class Protocol:
     """
@@ -135,7 +123,7 @@ class Protocol:
         type_keys = self._obj_type()
         type_values = self._obj_type()
         count = self._obj_int()
-        hashtable = WeechatDict()
+        hashtable = {}
         for i in range(0, count):
             key = self._obj_cb[type_keys]()
             value = self._obj_cb[type_values]()
@@ -150,14 +138,14 @@ class Protocol:
         list_path = path.split('/')
         list_keys = keys.split(',')
         keys_types = []
-        dict_keys = WeechatDict()
+        dict_keys = {}
         for key in list_keys:
             items = key.split(':')
             keys_types.append(items)
             dict_keys[items[0]] = items[1]
         items = []
         for i in range(0, count):
-            item = WeechatDict()
+            item = {}
             item['__path'] = []
             pointers = []
             for p in range(0, len(list_path)):
@@ -185,7 +173,7 @@ class Protocol:
         items = []
         for i in range(0, count_items):
             count_vars = self._obj_int()
-            variables = WeechatDict()
+            variables = {}
             for v in range(0, count_vars):
                 var_name = self._obj_str()
                 var_type = self._obj_type()
