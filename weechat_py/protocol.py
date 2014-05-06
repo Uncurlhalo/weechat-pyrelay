@@ -43,7 +43,7 @@ class Protocol:
         if len(self.data) < 3:
             self.data = ''
             return ''
-        objtype = self.data[0:3].decode()
+        objtype = self.data[0:3].decode("utf-8")
         self.data = self.data[3:]
         return objtype
 
@@ -98,7 +98,7 @@ class Protocol:
         if isinstance(value, str):
             return value
         else:
-            return value.decode()
+            return value.decode("utf-8")
 
     def _obj_buffer(self):
         """Read a buffer in data (length on 4 bytes + data)."""
@@ -109,7 +109,7 @@ class Protocol:
         value = self._obj_len_data(1)
         if value is None:
             return None
-        return '0x%s' % value.decode()
+        return '0x%s' % value.decode("utf-8")
 
     def _obj_time(self):
         """Read a time in data (length on 1 byte + value as string)."""
