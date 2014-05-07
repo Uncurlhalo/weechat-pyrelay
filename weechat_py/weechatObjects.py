@@ -3,40 +3,64 @@ import relay
 import color
 
 class WeechatBuffer():
-	def __init__(self, path, name):
+	def __init__(self, path, full_name, short_name, title):
 		self.lines = []
-		self.times = []
-		self.items = []
-		self.nicks = {}
+		self.nicks = []
 		self.path = path
-		self.name = name
+		self.full_name = full_name
+		self.short_name = short_name
+		self.title = title
 
 	def updateLines(self, therelay):
 		lines = []
-		times = []
 		therelay.send("(listlines) hdata buffer:{0}/own_lines/last_line(-500)/data date,displayed,prefix,message".format(self.path))
 		reply = therelay.recieve()
-		linesObject = reply.objects[0]
-		linesItems = linesObject.value['items']
+		linesItems = reply.objects[0].value['items']
 		for item in linesItems:
-			times.append(item['date'])
-			lines.append(item['message'])
+			displayed = bool(item['displayed'])
+			message = item['message']
+			prefix = item['prefix']
+			date = item['date']
+			lines.append(WeechatLine(message, date, prefix, displayed))
 		self.lines = lines
-		self.times = times
-		self.items = linesItems
 
 	def updateNicks(self, therelay):
-		nicks = {}
+		nicks = []
 		therelay.send('(nicklist) nicklist {0}'.format(self.path))
 		reply = therelay.recieve()
-		nicksObject = reply.objects[0]
-		nicksItems = nicksObject.value['items']
+		nicksItems = reply.objects[0].value['items']
 		for item in nicksItems:
-			nicks[item['name']] = item['color']
+			if item['group']:
+				pass
+			else:
+				name = item['name']
+				prefix = item['prefix']
+				color = item['color']
+				visible = bool(item['visible'])
+				nicks.append(WeechatNick(name, prefix, color, visible))
 		self.nicks = nicks
 
-	#def __str__(self):
-		# since I want to be able to utilize the weechat color codes
-		# have a __str__ function is useful since it will allow me to test 
-		# parsing the color codes and turning them into logical python
-		# for generating color
+	def __str__(self):
+		ret = ""
+		for line in reversed(self.lines):
+			if self.short_name:
+				ret += "{0} {1}{2}{3}\n".format(self.short_name.rjust(len(self.short_name)), color.remove(line.prefix).rjust(3), " | ", color.remove(line.message))
+			elif line.prefix:
+				ret += "{0}{1}{2}\n".format(color.remove(line.prefix).rjust(3), " | ", color.remove(line.message))
+			else:
+				ret += "{0}\n".format(color.remove(line.message))
+		return ret
+
+class WeechatLine():
+	def __init__(self, message, date, prefix, displayed):
+		self.displayed = displayed
+		self.message = message
+		self.prefix = prefix
+		self.date = date
+
+class WeechatNick():
+	def __inti__(self, name, prefix, color, visible):
+		self.name = name
+		self.prefix = prefix
+		self.color = color
+		self.visible = visible

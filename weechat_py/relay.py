@@ -63,3 +63,6 @@ class WeechatRelay:
 
 		message = self.proto.decode(buf)
 		return message
+
+	def close(self):
+		self.sock.close()
