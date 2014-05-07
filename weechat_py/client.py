@@ -47,6 +47,8 @@ for key,value in buffers.items():
 	buffers[key].times = times
 	buffers[key].items = linesItems
 
+# This section deals only with handling the data requested in the sections above
+# Right now it only prints the data in a resonably clean format
 for key,buf in buffers.items():
 	index = 0
 	print("Buffer {0} content:".format(key))
