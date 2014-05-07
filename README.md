@@ -1,23 +1,29 @@
-weechat-bouncer
+weechat-pyrelay
 ===============
 
-The project objective is to create a simple library for communicating with a running instance of weechat using the weechat-relay protocol.
+### Objective
+- Create a simple a simple library for communicating with remote Weechat sessions using the Weechat-relay plugin and protocol.
+- Create a simple reference client which demonstrates a method of using the library to create a simple CLI client using the Uwrid pyhton library.
+- Support SSL and IPv6
 
-Additionally a reference client will be built demonstrating how to create and utilize the objects presented by the library. It will also provide a simple interface with weechat allowing a remote user to send and recieve messages from their running weechat session. It will provide both SSL and IPv6 support.
+### Purpose
+This project is meant to fulfil final assingment in the ECE 2524 - Intro to Unix course at Virginia Tech
 
-This project is for the final assingment in the VT course ECE 2524 - Intro to Unix
+### Prototype
+This project requires you to have properly configured the weechat-relay plugin on your weechat process. Setting this up is beyond the scope of this project. Instructions to do so can be found here: http://meskarune.tumblr.com/post/43313352409/relay-weechat-irc-messages
 
-weechat-pyrelay utilizes some source from QWeechat available at https://github.com/weechat/qweechat.
+The latest usable prototype will be available in the weechat_py/ directory. Run the following to test the prototype.
 
-# Prototype
-The current functioning prototype is the client.py program in the weechat_py directory.
+    git clone https://github.com/Uncurlhalo/weechat-pyrelay
+    cd weechat-pyrelay/weechat_py/
 
-To run it cd to that directory after cloning the repo and edit the config to provide it the credentials for you weechat-relay
+Edit `conf.yaml` in the editor of your choice. You must change the Host, Port, and Password fields to match your weechat-relays settings. After the conf.yaml file contains the correct settings execute the following to run the actual prototype.
 
-Then run "python3 client.py"
+    chmod +x ./client.py
+    ./client.py
 
-This should print out a section of the last 100 lines in each buffer of your weechat session as well as timestamps for when lines were printed when applicable.
+The information returned is information about your remote weechat-relay session. It includes get a list of all buffers, their last 200 lines, and a list of nicks for each buffer.
 
-Since this project aims at providing a library for interfacing with relays a large portion of the substance is hidden from view. To appreciate the work done so far I would recommend playing with the various objects provided by the relay.py, protocol.py, and weechatObjects.py files.
+### Additional Notes
 
-As it is still a work in progress there may be bugs as testing and development are still occuring.
+The weechat-pyrelay project utilizes some source from QWeechat available at https://github.com/weechat/qweechat.

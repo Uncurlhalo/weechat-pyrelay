@@ -11,47 +11,44 @@ port = config['Port']
 IPv6 = config['IPv6']
 ssl = config['SSL']
 mypassword = config['Password']
-
 myRelay = relay.WeechatRelay(host, port, IPv6, ssl)
 myRelay.init(mypassword)
 
-# First get a list of buffers and create a buffer object for each
-myRelay.send('(listbuffers) hdata buffer:gui_buffers(*) number,full_name,short_name,type,nicklist,title,local_variables')
-reply = myRelay.recieve()
-buffers = {}
-bufferObject = reply.objects[0]
-bufferItemList = bufferObject.value['items']
-for item in bufferItemList:
-	name = item['full_name']
-	path = item['__path'][0]
-	buffers[name] = objs.WeechatBuffer(path, name)
+def bufferInit():
+	ret = {}
+	myRelay.send('(listbuffers) hdata buffer:gui_buffers(*) number,full_name,short_name,type,nicklist,title,local_variables')
+	reply = myRelay.recieve()
+	bufferItemList = reply.objects[0].value['items']
 
-# For each buffer object update its lines and update the nicks in buffer
-for key,value in buffers.items():
-	buffers[key].updateLines(myRelay)
-	buffers[key].updateNicks(myRelay)
+	# now we populate the buffers dict from the list of items
+	for item in bufferItemList:
+		full_name = item['full_name']
+		short_name = item['short_name']
+		path = item['__path'][0]
+		title = item['title']
+		ret[full_name] = objs.WeechatBuffer(path, full_name, short_name, title)
 
+	# For each buffer object update its lines and update the nicks in buffer
+	for key in ret.keys():
+		ret[key].updateLines(myRelay)
+		ret[key].updateNicks(myRelay)
+
+	return ret
+
+buffers = bufferInit()
 # This section deals only with handling the data requested in the sections above
 # Right now it only prints the data in a resonably clean format
 for key,buf in buffers.items():
-	index = len(buf.times) - 1
 	print("Buffer {0} content:".format(key))
-	for line in reversed(buf.lines):
-		if buf.times[index] != 0:
-			ts = datetime.datetime.fromtimestamp(buf.times[index]).strftime('%H:%M:%S')
-		else:
-			ts = None
-		index -= 1
-		output = color.remove(line)
-		if ts:
-			print(ts + " | " + output)
-		else:
-			print(output)
-	print("\n")
+	print(buf)
+	print("Buffer {0} nicklist:".format(key))
+	print(buf.nicklist)
 
-for key,buf in buffers.items():
-	print("{0} nickslist:".format(key))
-	print(buf.nicks)
-	print("\n")
+# TODO: the sync command will cause the remote relay to push any changes to clients.
+# This will be very helpful since it means polling the remote session isnt necessary, instead we can just wait for messages to arrive on the socket.
+# There will be the issue of when nothing has changed in the remote session, the socket will be locked waiting for data which will cause blocking.
+# Therefore a method of having the socket listening and updating the local data structures needs to exist, while a second process will be waiting for user input
+# and sending their new messages to the buffer they are viewing. This process will also handle escape sequences to change to different buffers as well as the 
+# drawing of the interface. This could be possible through threads or something like it, or state machine style coding.
 
-myRelay.send('sync')
+myRelay.close()
