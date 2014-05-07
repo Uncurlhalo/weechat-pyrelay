@@ -5,11 +5,12 @@ import color
 class WeechatBuffer():
 	def __init__(self, path, full_name, short_name, title):
 		self.lines = []
-		self.nicks = []
+		self.nicklist = WeechatNickList()
 		self.path = path
 		self.full_name = full_name
 		self.short_name = short_name
 		self.title = title
+		self.prefixWidth = None
 
 	def updateLines(self, therelay):
 		lines = []
@@ -25,7 +26,7 @@ class WeechatBuffer():
 		self.lines = lines
 
 	def updateNicks(self, therelay):
-		nicks = []
+		nicklist = WeechatNickList()
 		therelay.send('(nicklist) nicklist {0}'.format(self.path))
 		reply = therelay.recieve()
 		nicksItems = reply.objects[0].value['items']
@@ -37,14 +38,25 @@ class WeechatBuffer():
 				prefix = item['prefix']
 				color = item['color']
 				visible = bool(item['visible'])
-				nicks.append(WeechatNick(name, prefix, color, visible))
-		self.nicks = nicks
+				nicklist.addNick(WeechatNick(name, prefix, color, visible))
+		self.nicklist = nicklist
+
+	def getPrefixWidth(self):
+		longest = 0
+		for line in reversed(self.lines):
+			prefix = color.remove(line.prefix)
+			length = len(prefix)
+			if length > longest:
+				longest = length
+		self.prefixWidth = longest
 
 	def __str__(self):
 		ret = ""
+		if not self.prefixWidth:
+			self.getPrefixWidth()
 		for line in reversed(self.lines):
 			if self.short_name:
-				ret += "{0} {1}{2}{3}\n".format(self.short_name.rjust(len(self.short_name)), color.remove(line.prefix).rjust(3), " | ", color.remove(line.message))
+				ret += "{0} {1}{2}{3}\n".format(self.short_name.rjust(len(self.short_name)), color.remove(line.prefix).rjust(self.prefixWidth), " | ", color.remove(line.message))
 			elif line.prefix:
 				ret += "{0}{1}{2}\n".format(color.remove(line.prefix).rjust(3), " | ", color.remove(line.message))
 			else:
@@ -59,8 +71,24 @@ class WeechatLine():
 		self.date = date
 
 class WeechatNick():
-	def __inti__(self, name, prefix, color, visible):
+	def __init__(self, name, prefix, color, visible):
 		self.name = name
 		self.prefix = prefix
 		self.color = color
 		self.visible = visible
+
+class WeechatNickList():
+	def __init__(self):
+		self.nicks = []
+
+	def addNick(self, newNick):
+		self.nicks.append(newNick)
+
+	def __str__(self):
+		ret = ""
+		for nick in self.nicks:
+			if nick.visible:
+				ret += "{0}{1}\n".format(nick.prefix, nick.name)
+			else:
+				ret = ret
+		return ret

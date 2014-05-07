@@ -41,4 +41,6 @@ buffers = bufferInit()
 for key,buf in buffers.items():
 	print("Buffer {0} content:".format(key))
 	print(buf)
+	print("Buffer {0} nicklist:".format(key))
+	print(buf.nicklist)
 myRelay.close()
