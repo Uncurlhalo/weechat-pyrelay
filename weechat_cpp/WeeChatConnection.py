@@ -16,5 +16,5 @@ class WeeChatConnection:
 
 if __name__ == '__main__':
     wcc = WeeChatConnection('128.173.88.125', 9000, False, False)
-    wcc.init("reeelay")
+    wcc.init("rytuoiyt")
     wcc.SendMessage("info version")
