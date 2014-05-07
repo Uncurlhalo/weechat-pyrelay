@@ -45,6 +45,22 @@ public:
     ~CommunicationException() throw() {}
 };
 
+class WeeChatAllocationException : public std::exception
+{
+private:
+    std::string what_string;
+public:
+    WeeChatAllocationException(std::string what_string)
+    {
+        this->what_string = what_string;
+    }
+    virtual const char* what() const throw()
+    {
+        return what_string.c_str();
+    }
+    ~WeeChatAllocationException() throw() {}
+};
+
 class WeeChatConnection
 {
 private:
@@ -57,6 +73,8 @@ public:
 
     void init(std::string password);
     void send_msg(std::string message);
+    std::string receive();
+
 };
 
 //python wrappings
@@ -89,7 +107,15 @@ extern "C"
     {
         delete self;
     }
-
+    
+    char *WeeChatConnection_receive(WeeChatConnection* self)
+    {
+        
+        std::string tmp = self->receive();
+        char *buf = new char[4096];       
+        strncpy(buf, tmp.c_str(), 4096);
+        return buf;
+    }
 }
 
 #endif

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <errno.h>
 #include <cstdio>
+#include <cstdlib>
 
 WeeChatConnection::WeeChatConnection(std::string server,
                                      int port,
@@ -40,7 +41,7 @@ WeeChatConnection::WeeChatConnection(std::string server,
 void WeeChatConnection::init(std::string password)
 {
     std::string init_string = "init password=" + password + "\n";
-    if (send(this->sockfd, init_string.c_str(), init_string.size(), 0) != init_string.size())
+    if (send(this->sockfd, init_string.c_str(), init_string.size(), 0) == -1)
     {
         throw CommunicationException("Could not send init message!");
     } 
@@ -49,8 +50,30 @@ void WeeChatConnection::init(std::string password)
 void WeeChatConnection::send_msg(std::string message)
 {
     std::string message_string = message + "\n";
-    if (send(this->sockfd, message_string.c_str(), message_string.size(), 0) != message_string.size())
+    if (send(this->sockfd, message_string.c_str(), message_string.size(), 0) == -1)
     {
         throw CommunicationException(std::string("Could not send message ") + message);
     }   
+}
+
+std::string WeeChatConnection::receive()
+{
+    char *message_str = new char[4];
+
+    int n = recv(this->sockfd, message_str, 4, 0);
+    if (n < 0)
+        throw CommunicationException(std::string("Failed to receive data"));
+    
+    size_t size = ntohl(*(uint32_t*)message_str); 
+
+    if ( ( message_str = (char*)realloc(message_str, size)) == NULL)
+        throw WeeChatAllocationException(std::string("Could not allocate space for message"));
+
+    n = recv(this->sockfd, message_str+4, size-4, 0);
+   
+    std::string return_string = message_str;
+     
+    delete[] message_str;
+ 
+    return return_string;
 }
