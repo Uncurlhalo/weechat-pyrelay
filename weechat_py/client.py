@@ -1,5 +1,7 @@
 import yaml
+import color
 import relay
+import datetime
 import argparse
 import weechatObjects as objs
 
@@ -29,18 +31,37 @@ for item in bufferItemList:
 
 # For each buffer object get its last 100 lines
 # Make the buffers.lines value equal to the new list of lines
-for key,path in buffers.items():
+for key,value in buffers.items():
 	lines = []
-	myRelay.send("(listlines) hdata buffer:{0}"
-				  "/own_lines/last_line(-50)/data "
-				  "date,displayed,prefix,message".format(path))
+	times = []
+	myRelay.send("(listlines) hdata buffer:{0}/own_lines/last_line(-100)/data date,displayed,prefix,message".format(value.path))
 	reply = myRelay.recieve()
 	linesObject = reply.objects[0]
-	linesItemList = linesObject.value['items']
-	for item in linesItemList:
+	linesItems = linesObject.value['items']
+	for item in linesItems:
+		times.append(item['date'])
 		lines.append(item['message'])
-
+	lines.reverse()
+	times.reverse()
 	buffers[key].lines = lines
+	buffers[key].times = times
+	buffers[key].items = linesItems
+
+for key,buf in buffers.items():
+	index = 0
+	print("Buffer {0} content:".format(key))
+	for line in buf.lines:
+		if buf.times[index] != 0:
+			ts = datetime.datetime.fromtimestamp(buf.times[index]).strftime('%Y-%m-%d %H:%M:%S')
+		else:
+			ts = None
+		index += 1
+		output = color.remove(line)
+		if ts:
+			print(ts + " | " + output)
+		else:
+			print(output)
+	print("\n")
 
 myRelay.send('(nicklist) nicklist')
 nicklist = myRelay.recieve()

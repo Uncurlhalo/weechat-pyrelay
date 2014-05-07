@@ -151,6 +151,7 @@ class Color():
         return match.group(0)
 
     def _convert_color_debug(self, match):
+        print(match)
         group = match.group(0)
         for code in (0x01, 0x02, 0x03, 0x04, 0x19, 0x1A, 0x1B):
             group = group.replace(chr(code), '<x%02X>' % code)
