@@ -14,7 +14,7 @@ The current functioning prototype is the client.py program in the weechat_py dir
 
 To run it cd to that directory after cloning the repo and edit the config to provide it the credentials for you weechat-relay
 
-Then run "python3 client.py --password $your_relay_password"
+Then run "python3 client.py"
 
 This should print out a section of the last 100 lines in each buffer of your weechat session as well as timestamps for when lines were printed when applicable.
 

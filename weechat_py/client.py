@@ -5,18 +5,15 @@ import datetime
 import argparse
 import weechatObjects as objs
 
-parser = argparse.ArgumentParser(description='Parse some args yo')
-parser.add_argument('--password', '-p', type=str)
-args = parser.parse_args()
-
 config = yaml.load(open('conf.yaml', 'r'))
 host = config['Host']
 port = config['Port']
 IPv6 = config['IPv6']
 ssl = config['SSL']
+mypassword = config['Password']
 
 myRelay = relay.WeechatRelay(host, port, IPv6, ssl)
-myRelay.init(args.password)
+myRelay.init(mypassword)
 
 # First get a list of buffers and create a buffer object for each
 myRelay.send('(listbuffers) hdata buffer:gui_buffers(*) number,full_name,short_name,type,nicklist,title,local_variables')
@@ -54,7 +51,7 @@ for key,buf in buffers.items():
 	print("Buffer {0} content:".format(key))
 	for line in buf.lines:
 		if buf.times[index] != 0:
-			ts = datetime.datetime.fromtimestamp(buf.times[index]).strftime('%Y-%m-%d %H:%M:%S')
+			ts = datetime.datetime.fromtimestamp(buf.times[index]).strftime('%H:%M:%S')
 		else:
 			ts = None
 		index += 1

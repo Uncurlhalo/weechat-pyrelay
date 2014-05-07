@@ -2,3 +2,4 @@ Host: 'localhost'
 Port: 9000
 IPv6: False
 SSL: False
+Password: thisisapassword

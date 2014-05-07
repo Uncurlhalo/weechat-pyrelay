@@ -54,12 +54,12 @@ class WeechatRelay:
 
 	def recieve(self):
 		buf = b''
-		#try:
-		buf = self.sock.recv(4)
-		length = struct.unpack('>i', buf[0:4])[0]
-		buf += self.sock.recv(length-4)
-		#except:
-		#	print("Unable to recieve on the socket, has init been run?")
+		try:
+			buf = self.sock.recv(4)
+			length = struct.unpack('>i', buf[0:4])[0]
+			buf += self.sock.recv(length-4)
+		except:
+			print("Unable to recieve on the socket, has init been run?")
 
 		message = self.proto.decode(buf)
 		return message
