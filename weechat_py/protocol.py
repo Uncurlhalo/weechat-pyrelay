@@ -11,6 +11,8 @@
 # 2014-05-03, Jacob Melton:
 #     initial development
 #
+# protocol.py is derived from QWeechat available at https://github.com/weechat/qweechat
+#
 
 import struct
 import zlib
