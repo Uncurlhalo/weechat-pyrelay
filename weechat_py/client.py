@@ -43,4 +43,12 @@ for key,buf in buffers.items():
 	print(buf)
 	print("Buffer {0} nicklist:".format(key))
 	print(buf.nicklist)
+
+# TODO: the sync command will cause the remote relay to push any changes to clients.
+# This will be very helpful since it means polling the remote session isnt necessary, instead we can just wait for messages to arrive on the socket.
+# There will be the issue of when nothing has changed in the remote session, the socket will be locked waiting for data which will cause blocking.
+# Therefore a method of having the socket listening and updating the local data structures needs to exist, while a second process will be waiting for user input
+# and sending their new messages to the buffer they are viewing. This process will also handle escape sequences to change to different buffers as well as the 
+# drawing of the interface. This could be possible through threads or something like it, or state machine style coding.
+
 myRelay.close()

@@ -56,10 +56,13 @@ class WeechatBuffer():
 			self.getPrefixWidth()
 		for line in reversed(self.lines):
 			if self.short_name:
+				### FIXME: Currently color stripping is hard coded, this should be configurable
 				ret += "{0} {1}{2}{3}\n".format(self.short_name.rjust(len(self.short_name)), color.remove(line.prefix).rjust(self.prefixWidth), " | ", color.remove(line.message))
 			elif line.prefix:
+				### FIXME: Currently color stripping is hard coded, this should be configurable
 				ret += "{0}{1}{2}\n".format(color.remove(line.prefix).rjust(3), " | ", color.remove(line.message))
 			else:
+				### FIXME: Currently color stripping is hard coded, this should be configurable
 				ret += "{0}\n".format(color.remove(line.message))
 		return ret
 
@@ -92,3 +95,4 @@ class WeechatNickList():
 			else:
 				ret = ret
 		return ret
+	
