@@ -14,7 +14,7 @@ class WeechatBuffer():
 
 	def updateLines(self, therelay):
 		lines = []
-		therelay.send("(listlines) hdata buffer:{0}/own_lines/last_line(-500)/data date,displayed,prefix,message".format(self.path))
+		therelay.send("(listlines) hdata buffer:{0}/own_lines/last_line(-200)/data date,displayed,prefix,message".format(self.path))
 		reply = therelay.recieve()
 		linesItems = reply.objects[0].value['items']
 		for item in linesItems:
@@ -95,4 +95,3 @@ class WeechatNickList():
 			else:
 				ret = ret
 		return ret
-	
