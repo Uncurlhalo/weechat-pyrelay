@@ -65,15 +65,22 @@ std::string WeeChatConnection::receive()
         throw CommunicationException(std::string("Failed to receive data"));
     
     size_t size = ntohl(*(uint32_t*)message_str); 
-
+    
     if ( ( message_str = (char*)realloc(message_str, size)) == NULL)
         throw WeeChatAllocationException(std::string("Could not allocate space for message"));
 
     n = recv(this->sockfd, message_str+4, size-4, 0);
-   
-    std::string return_string = message_str;
      
+    std::string return_string(message_str, size);    
+  
     delete[] message_str;
- 
+    
     return return_string;
+}
+
+void WeeChatConnection::close()
+{
+    if (shutdown(this->sockfd, 2))
+        throw CommunicationException(std::string("Could not close socket!"));
+
 }

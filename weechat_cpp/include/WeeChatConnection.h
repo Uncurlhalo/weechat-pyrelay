@@ -11,6 +11,8 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
+#include <iostream>
+#include <algorithm>
 
 class SocketException : public std::exception
 {
@@ -74,7 +76,7 @@ public:
     void init(std::string password);
     void send_msg(std::string message);
     std::string receive();
-
+    void close();
 };
 
 //python wrappings
@@ -108,13 +110,28 @@ extern "C"
         delete self;
     }
     
-    char *WeeChatConnection_receive(WeeChatConnection* self)
+    struct ReceiveData
     {
-        
+        size_t arr_size;
+        char* arr_ptr;
+    };
+     
+    ReceiveData *WeeChatConnection_receive(WeeChatConnection* self, ReceiveData* rd)
+    {
+        std::cout << 'a' << std::endl;
         std::string tmp = self->receive();
-        char *buf = new char[4096];       
-        strncpy(buf, tmp.c_str(), 4096);
-        return buf;
+        std::cout << 'b' << std::endl;
+        rd->arr_size = tmp.size();
+        rd->arr_ptr = new char[tmp.size()];
+        std::cout << 'c' << std::endl;
+        memcpy(rd->arr_ptr, tmp.c_str(), tmp.size());
+        std::cout << 'd' << std::endl;
+        return rd;
+    }
+    
+    void WeeChatConnection_close(WeeChatConnection* self)
+    {
+        self->close();
     }
 }
 
