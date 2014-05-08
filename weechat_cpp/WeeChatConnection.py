@@ -40,8 +40,8 @@ class WeeChatConnection:
         self.library.WeeChatConnection_destroy(self.class_ptr)
 
 if __name__ == '__main__':
-    wcc = WeeChatConnection('127.173.88.125', 9000, False, False)
-    wcc.init("reeelay")
+    wcc = WeeChatConnection(/*server ip here (sorry, have to fix)*/, 9000, False, False)
+    wcc.init(/*password here*/)
     wcc.SendMessage("info version")
     print(wcc.receive())
     wcc.close()
