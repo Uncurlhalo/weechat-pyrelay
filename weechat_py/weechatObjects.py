@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import relay
 import color
+import os
 
 class WeechatBuffer():
 	def __init__(self, path, full_name, short_name, title):
@@ -55,15 +56,33 @@ class WeechatBuffer():
 		ret = ""
 		if not self.prefixWidth:
 			self.getPrefixWidth()
+		rows, columns = os.popen('stty size', 'r').read().split()
 		for line in reversed(self.lines):
-			if self.short_name:
+			if self.short_name: 
 				### FIXME: Currently color stripping is hard coded, this should be configurable
 				### FIXME: if the line.message is wider than the buffer it's given space in, then we need to wrap it someway
-				ret += "{0} {1}{2}{3}\n".format(self.short_name.rjust(len(self.short_name)), color.remove(line.prefix).rjust(self.prefixWidth), " | ", color.remove(line.message))
+				prefix_str = "{0} {1}{2}".format(self.short_name.rjust(len(self.short_name)), color.remove(line.prefix).rjust(self.prefixWidth), " | ")
+				message_str = color.remove(line.message)
+				ret += prefix_str + message_str[:(int(columns) - len(prefix_str))]
+				message_str = message_str[(int(columns) - len(prefix_str)):]
+				while len(message_str) > 0:
+					ret += ' '*(len(prefix_str)-2) + '| '
+					ret += message_str[:(int(columns) - len(prefix_str))]
+					message_str = message_str[(int(columns) - len(prefix_str)):] 
+				ret += '\n'
 			elif line.prefix:
 				### FIXME: Currently color stripping is hard coded, this should be configurable
 				### FIXME: if the line.message is wider than the buffer it's given space in, then we need to wrap it someway
-				ret += "{0}{1}{2}\n".format(color.remove(line.prefix).rjust(3), " | ", color.remove(line.message))
+				#ret += "{0}{1}{2}\n".format(color.remove(line.prefix).rjust(3), " | ", color.remove(line.message))
+				prefix_str = "{0}{1}".format(color.remove(line.prefix).rjust(self.prefixWidth), " | ")
+				message_str = color.remove(line.message)
+				ret += prefix_str + message_str[:(int(columns) - len(prefix_str))]
+				message_str = message_str[(int(columns) - len(prefix_str)):]
+				while len(message_str) > 0:
+					ret += ' '*(len(prefix_str)-2) + '| '
+					ret += message_str[:(int(columns) - len(prefix_str))]
+					message_str = message_str[(int(columns) - len(prefix_str)):]
+				ret += '\n'
 			else:
 				### FIXME: Currently color stripping is hard coded, this should be configurable
 				### FIXME: if the line.message is wider than the buffer it's given space in, then we need to wrap it someway
