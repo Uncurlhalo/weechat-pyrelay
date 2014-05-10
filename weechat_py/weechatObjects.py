@@ -59,8 +59,6 @@ class WeechatBuffer():
 		rows, columns = os.popen('stty size', 'r').read().split()
 		for line in reversed(self.lines):
 			if self.short_name: 
-				### FIXME: Currently color stripping is hard coded, this should be configurable
-				### FIXME: if the line.message is wider than the buffer it's given space in, then we need to wrap it someway
 				prefix_str = "{0} {1}{2}".format(self.short_name.rjust(len(self.short_name)), color.remove(line.prefix).rjust(self.prefixWidth), " | ")
 				message_str = color.remove(line.message)
 				ret += prefix_str + message_str[:(int(columns) - len(prefix_str))]
@@ -71,9 +69,6 @@ class WeechatBuffer():
 					message_str = message_str[(int(columns) - len(prefix_str)):] 
 				ret += '\n'
 			elif line.prefix:
-				### FIXME: Currently color stripping is hard coded, this should be configurable
-				### FIXME: if the line.message is wider than the buffer it's given space in, then we need to wrap it someway
-				#ret += "{0}{1}{2}\n".format(color.remove(line.prefix).rjust(3), " | ", color.remove(line.message))
 				prefix_str = "{0}{1}".format(color.remove(line.prefix).rjust(self.prefixWidth), " | ")
 				message_str = color.remove(line.message)
 				ret += prefix_str + message_str[:(int(columns) - len(prefix_str))]
@@ -84,27 +79,8 @@ class WeechatBuffer():
 					message_str = message_str[(int(columns) - len(prefix_str)):]
 				ret += '\n'
 			else:
-				### FIXME: Currently color stripping is hard coded, this should be configurable
-				### FIXME: if the line.message is wider than the buffer it's given space in, then we need to wrap it someway
 				ret += "{0}\n".format(color.remove(line.message))
 		return ret
-
-"""
-An example of the line wrapping issue follows.
-Given a frame in the UI of X width, what if the length of time + prefix + | + line is greater than X? We would currently get something like this:
-V------------------------------------Frame Width X--------------------------------------------V
-12:34:56 ~prefix | this is my line, it keeps going oh no we're about to hit that X bound here w
-e go. look we just wrapped around.
-12:34:57   @nick | here is our next line it is plenty short.
-02:44:20 lololol | etc.
-
-Below is how it should properly wrap so that we can just give our UI buffer a string to print:
-V------------------------------------Frame Width X--------------------------------------------V 
-12:34:56 ~prefix | this is my line, it keeps going oh no we're about to hit that X bound here w
-				 | e go. look we just wrapped around.
-12:34:57   @nick | here is our next line it is plenty short.
-02:44:20 lololol | etc.
-"""
 
 class WeechatLine():
 	def __init__(self, message, date, prefix, displayed):
