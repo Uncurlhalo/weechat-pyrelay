@@ -12,7 +12,7 @@ class WeechatBuffer():
 		self.short_name = short_name
 		self.title = title
 		self.prefixWidth = None
-		self.lineWidth = None
+		self.nickWidth = None
 
 	def updateLines(self, therelay):
 		lines = []
@@ -99,15 +99,30 @@ class WeechatNick():
 class WeechatNickList():
 	def __init__(self):
 		self.nicks = []
+		self.nickWidth = None
 
 	def addNick(self, newNick):
 		self.nicks.append(newNick)
 
+	def getNickWidth(self):
+		longest = 0
+		for nick in rself.nicks
+			length = len(nick.prefix + nick.name)
+			if length > longest:
+				longest = length
+		return longest
+
 	def __str__(self):
 		ret = ""
+		if not self.nickWidth:
+			self.nickWidth = self.getNickWidth()
 		for nick in self.nicks:
 			if nick.visible:
-				ret += "{0}{1}\n".format(nick.prefix, nick.name)
+				temp = "{0}{1}".format(nick.prefix, nick.name)
+				if len(temp) > nickWidth:
+					ret = ret + temp[:(nickWidth - 1)] + "+\n"
+				else:
+					ret = ret + temp + "\n"
 			else:
 				ret = ret
 		return ret
