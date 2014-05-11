@@ -37,8 +37,11 @@ class WeechatRelay:
 		actually connect to the socket and use the relay init call
 		"""
 		self.password = password
-		self.sock.connect((self.host, self.port))
-
+		try:
+			self.sock.connect((self.host, self.port))
+		except:
+			print("couldn't connect")
+			
 		message = "init password={0}\n".format(self.password)
 		self.sock.send(message.encode())
 
@@ -52,16 +55,27 @@ class WeechatRelay:
 		except:
 			print("Unable to send on the socket, has init been run?")
 
+	"""
+	Function - recieve data from a socket.
+	Returns  - contents of the next weechat relay message
+			 - empty string if no message
+	"""
 	def recieve(self):
 		buf = b''
 		try:
 			buf = self.sock.recv(4)
-			length = struct.unpack('>i', buf[0:4])[0]
-			buf += self.sock.recv(length-4)
+			if buf:
+				length = struct.unpack('>i', buf[0:4])[0]
+				buf += self.sock.recv(length-4)
+			else:
+				pass
 		except:
 			print("Unable to recieve on the socket, has init been run?")
 
-		message = self.proto.decode(buf)
+		if buf:
+			message = self.proto.decode(buf)
+		else:
+			message = ""
 		return message
 
 	def close(self):

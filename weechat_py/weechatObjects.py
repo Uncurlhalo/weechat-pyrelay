@@ -106,7 +106,7 @@ class WeechatNickList():
 
 	def getNickWidth(self):
 		longest = 0
-		for nick in rself.nicks
+		for nick in self.nicks:
 			length = len(nick.prefix + nick.name)
 			if length > longest:
 				longest = length
