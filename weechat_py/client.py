@@ -56,8 +56,6 @@ lock = threading.Lock()
 network_Thread = Networker(buffers, lock)
 network_Thread.start()
 
-print(buffers['core.weechat'])
-
 class Networker(threading.Thread):
     def __init__(self, buffers, lock):
         super(Networker, self).__init__()
