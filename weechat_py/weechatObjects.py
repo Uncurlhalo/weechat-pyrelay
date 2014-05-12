@@ -52,12 +52,21 @@ class WeechatBuffer():
 				longest = length
 		self.prefixWidth = longest
 
+	def getNickWidth(self):
+		# TODO: implement a way to calculate nick width, this should be over-ridable so the nick column can be forced to be no wider than some max width.
+		self.nickWidth = 10
+
 	def __str__(self):
+		# TODO: we need to have the number of rows in the string returned by __str__ to be 3 less than height of the tty, so that we can added the title bar and input+status bars
+		# TODO: we need to have the width of the returned string equal to the number of colums in the tty minus the width of the nick buffer so that we can print the nick buffer next to the messages
 		ret = ""
 		if not self.prefixWidth:
 			self.getPrefixWidth()
+		if not self.nickWidth:
+			self.getNickWidth()
 		rows, columns = os.popen('stty size', 'r').read().split()
 		for line in reversed(self.lines):
+			### Note: likely there will need to be something in here to calculate the number of new lines to append if the buffer doesnt naturally fill the row count
 			if self.short_name: 
 				prefix_str = "{0} {1}{2}".format(self.short_name.rjust(len(self.short_name)), color.remove(line.prefix).rjust(self.prefixWidth), " | ")
 				message_str = color.remove(line.message)

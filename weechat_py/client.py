@@ -9,20 +9,42 @@ import threading
 import weechatSync as syncing
 import weechatObjects as objs
 
+updateUI = 0
+
 class Networker(threading.Thread):
     def __init__(self, buffers, lock):
         threading.Thread.__init__(self)
-        self.lock = lock
         self.buffers = buffers
+        self.lock = lock
 
-    def run():
+    def run(self):
+        global updateUI
         # just wait for a reply, once we get it pass it on and try
         # to read again cause sync will be sending lots of messages
         while True:
             reply = myRelay.recieve()
             self.lock.acquire()
-            syncing.processReply(reply, self.buffers)
+            if syncing.processReply(reply, self.buffers):
+                updateUI += 1
             self.lock.release()
+
+class UIHandler(threading.Thread):
+    def __init__(self, buffers, lock):
+        threading.Thread.__init__(self)
+        self.buffers = buffers
+        self.lock = lock
+
+    def run(self):
+        global updateUI
+        while True:
+            self.lock.acquire()
+            if updateUI:
+                # TODO: Figure out UI things
+                # we update UI shit, meaning that the sync message pertains to the currently viewed buffer or the whole client interface
+                print("UI had to update")
+                updateUI -= 1
+            self.lock.release()
+
 
 config = yaml.load(open('conf.yaml', 'r'))
 mypassword = config['Password']
@@ -30,6 +52,7 @@ host = config['Host']
 port = config['Port']
 IPv6 = config['IPv6']
 ssl = config['SSL']
+
 # Initialize
 myRelay = relay.WeechatRelay(host, port, IPv6, ssl)
 myRelay.init(mypassword)
@@ -37,6 +60,7 @@ myRelay.init(mypassword)
 myRelay.send('(listbuffers) hdata buffer:gui_buffers(*) number,full_name,short_name,type,nicklist,title,local_variables')
 reply = myRelay.recieve()
 bufferItemList = reply.objects[0].value['items']
+
 # Initialize data structure
 buffers = {}
 for item in bufferItemList:
@@ -50,23 +74,17 @@ for key in buffers.keys():
     buffers[key].updateNicks(myRelay)
 
 myRelay.send('sync')
-myRelay.send('input core.weechat \help')
 
 lock = threading.Lock()
 network_Thread = Networker(buffers, lock)
+ui_Thread = UIHandler(buffers, lock)
 network_Thread.start()
+ui_Thread.start()
 
-class Networker(threading.Thread):
-    def __init__(self, buffers, lock):
-        super(Networker, self).__init__()
-        self.lock = lock
-        self.buffers = buffers
+myRelay.send('input core.weechat /help')
+myRelay.send('input core.weechat /reconnect oftc')
 
-    def run(self):
-        # just wait for a reply, once we get it pass it on and try
-        # to read again cause sync will be sending lots of messages
-        while True:
-            reply = myRelay.recieve()
-            self.lock.acquire()
-            syncing.processReply(reply, self.buffers)
-            self.lock.release()
+while True:
+    # TODO: decide how to do grabbing of input on last row
+    # here we should loop forever in the main thread capturing user input and sending it as "input" messages to the relay
+    print("grabbed input")
