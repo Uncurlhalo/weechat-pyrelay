@@ -1,24 +1,30 @@
 #!/usr/bin/env python3
+import datetime
 import relay
 import color
+import time
 import os
 
 class WeechatBuffer():
-	def __init__(self, path, full_name, short_name, title):
+	def __init__(self, path, full_name, short_name, title, relay=None):
 		self.lines = []
 		self.nicklist = WeechatNickList()
 		self.path = path
 		self.full_name = full_name
 		self.short_name = short_name
 		self.title = title
+		self.relay = relay
 		self.prefixWidth = None
 		self.nickWidth = None
 		self.MAX_NICK_WIDTH = 0
 
-	def updateLines(self, therelay):
+	def updateLines(self):
 		lines = []
-		therelay.send("(listlines) hdata buffer:{0}/own_lines/last_line(-200)/data date,displayed,prefix,message".format(self.path))
-		reply = therelay.recieve()
+		if self.relay:
+			self.relay.send("(listlines) hdata buffer:{0}/own_lines/last_line(-200)/data date,displayed,prefix,message".format(self.path))
+		else:
+			return False
+		reply = self.relay.recieve()
 		linesItems = reply.objects[0].value['items']
 		for item in linesItems:
 			displayed = bool(item['displayed'])
@@ -26,12 +32,20 @@ class WeechatBuffer():
 			prefix = item['prefix']
 			date = item['date']
 			lines.append(WeechatLine(message, date, prefix, displayed))
+		lines.reverse()
 		self.lines = lines
+		return True
 
-	def updateNicks(self, therelay):
+	def addLine(self, message, prefix="   "):
+		self.lines.append(WeechatLine(message, int(time.time()), prefix, True))
+
+	def updateNicks(self):
 		nicklist = WeechatNickList()
-		therelay.send('(nicklist) nicklist {0}'.format(self.path))
-		reply = therelay.recieve()
+		if self.relay:
+			self.relay.send('(nicklist) nicklist {0}'.format(self.path))
+		else:
+			return False
+		reply = self.relay.recieve()
 		nicksItems = reply.objects[0].value['items']
 		for item in nicksItems:
 			if item['group']:
@@ -43,10 +57,11 @@ class WeechatBuffer():
 				visible = bool(item['visible'])
 				nicklist.addNick(WeechatNick(name, prefix, color, visible))
 		self.nicklist = nicklist
+		return True
 
 	def getPrefixWidth(self):
 		longest = 0
-		for line in reversed(self.lines):
+		for line in self.lines:
 			prefix = color.remove(line.prefix)
 			length = len(prefix)
 			if length > longest:
@@ -67,19 +82,19 @@ class WeechatBuffer():
 			self.nickWidth = longest
 
 	def __str__(self):
-		# TODO: we need to have the number of rows in the string returned by __str__ to be 3 less than height of the tty, so that we can added the title bar and input+status bars
-		# TODO: we need to have the width of the returned string equal to the number of colums in the tty minus the width of the nick buffer so that we can print the nick buffer next to the messages
+		# TODO: The number of lines to be printed to the TTY needs to be 3 lines less than its total height, this allows the title at the top and then a status line plus the input line at the bottom
 		ret = ""
 		if not self.prefixWidth:
 			self.getPrefixWidth()
-		if not self.nickWidth:
-			self.getNickWidth()
+		#if not self.nickWidth:
+		#	self.getNickWidth()
 		rows, columns = os.popen('stty size', 'r').read().split()
-		for line in reversed(self.lines):
-			### Note: likely there will need to be something in here to calculate the number of new lines to append if the buffer doesnt naturally fill the row count
-			if self.short_name: 
-				prefix_str = "{0} {1}{2}".format(self.short_name.rjust(len(self.short_name)), color.remove(line.prefix).rjust(self.prefixWidth), " | ")
+		for line in self.lines:
+			dt = datetime.datetime.fromtimestamp(line.date)
+			if self.short_name and len(self.lines): 
+				prefix_str = "{0} {1} {2}{3}".format(dt.strftime('%X'), self.short_name.rjust(len(self.short_name)), color.remove(line.prefix).rjust(self.prefixWidth), " | ")
 				message_str = color.remove(line.message)
+				# adjust for tty width
 				ret += prefix_str + message_str[:(int(columns) - len(prefix_str))]
 				message_str = message_str[(int(columns) - len(prefix_str)):]
 				while len(message_str) > 0:
@@ -87,9 +102,10 @@ class WeechatBuffer():
 					ret += message_str[:(int(columns) - len(prefix_str))]
 					message_str = message_str[(int(columns) - len(prefix_str)):] 
 				ret += '\n'
-			elif line.prefix:
-				prefix_str = "{0}{1}".format(color.remove(line.prefix).rjust(self.prefixWidth), " | ")
+			elif line.prefix and len(self.lines):
+				prefix_str = "{0} {1}{2}".format(dt1.strftime('%X'), color.remove(line.prefix).rjust(self.prefixWidth), " | ")
 				message_str = color.remove(line.message)
+				# adjust for tty width
 				ret += prefix_str + message_str[:(int(columns) - len(prefix_str))]
 				message_str = message_str[(int(columns) - len(prefix_str)):]
 				while len(message_str) > 0:
@@ -97,7 +113,7 @@ class WeechatBuffer():
 					ret += message_str[:(int(columns) - len(prefix_str))]
 					message_str = message_str[(int(columns) - len(prefix_str)):]
 				ret += '\n'
-			else:
+			elif len(self.lines):
 				ret += "{0}\n".format(color.remove(line.message))
 		return ret
 

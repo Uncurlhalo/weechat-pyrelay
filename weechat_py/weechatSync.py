@@ -1,8 +1,6 @@
 import relay
 import weechatObjects as objs
 
-# TODO: Complete implementation of all the sync replies
-
 def processReply(reply, buffers):
 	# this will take the reply, look at is ID field, and take some action based on its type
 	# these actions will all update weechat datastructures from weechatObjects.
@@ -36,9 +34,10 @@ def pong(reply, buffers):
 
 def upgrade(reply, buffers):
 	# Not needed currently, implement when needed
-	return True
+	return False
 
 def nicklist(reply, buffers):
+	print("sync message: nicklist")
 	nicklist = objs.WeechatNickList()
 	nicksItems = reply.objects[0].value['items']
 	for key,buf in buffers.items():
@@ -53,10 +52,9 @@ def nicklist(reply, buffers):
 					visible = bool(item['visible'])
 					nicklist.addNick(objs.WeechatNick(name, prefix, color, visible))
 			buf.nicklist = nicklist
-			return True
 		else:
 			pass
-	return False
+	return True
 
 def bufMoved(reply, buffers):
 	# Not needed currently, implement when needed
@@ -67,7 +65,13 @@ def bufMerged(reply, buffers):
 	return False
 
 def bufOpened(reply, buffers):
-	# Not needed currently, implement when needed
+	print("sync message: buffer opened")
+	replyItems = reply.objects[0].value['items'][0]
+	full_name = replyItems['full_name']
+	short_name = replyItems['short_name']
+	path = replyItems['__path'][0]
+	title = replyItems['title']
+	buffers[full_name] = objs.WeechatBuffer(path, full_name, short_name, title)
 	return True
 
 def bufHidden(reply, buffers):
@@ -75,13 +79,14 @@ def bufHidden(reply, buffers):
 	return False
 
 def bufClosing(reply, buffers):
-	# Not needed currently, implement when needed
+	print("sync message: buffer closing")
 	return True
 
 def bufRenamed(reply, buffers):
+	print("sync message: buffer renamed")
 	replyItems = reply.objects[0].value['items'][0]
 	for key,buf in buffers.items():
-		if buf.path == replyItems['buffer']:
+		if buf.path == replyItems['__path']:
 			full_name = replyItems['full_name']
 			short_name = replyItems['short_name']
 			buf.full_name = full_name
@@ -89,21 +94,13 @@ def bufRenamed(reply, buffers):
 	return True
 
 def nicklistDiff(reply, buffers):
-	nicksItems = reply.objects[0].value['items'][0]
-	for key,buf in buffers.items():
-		if buf.path == nicksItems['buffer']:
-			for item in nicksItems:
-				if item['group']:
-					pass
-				else:
-					# TODO: figure how to find the nick already in the list and only make the changes given by the diff
-					# since the diff can just changes things like group/prefix, we shouldnt need to add a new nick, just
-					# change the values of a nick already there.
-					pass
-	return True
+	# Not needed currently, implement when needed
+	# this currently only indicates that a nicks group has changed of a group has changed order with parents, so for now it isnt needed
+	# since this data isnt tracked by our nick datastructure
+	return False
 
 def upgradeEnded(reply, buffers):
-	# Not needed currently, implement when needed
+
 	return False
 
 def bufUnmerged(reply, buffers):
@@ -123,6 +120,7 @@ def bufLineAdded(reply, buffers):
 			prefix = replyItems['prefix']
 			date = replyItems['date']
 			buf.lines.append(objs.WeechatLine(message, date, prefix, displayed))
+			buf.getPrefixWidth()
 		else:
 			pass
 	return True
@@ -130,7 +128,6 @@ def bufLineAdded(reply, buffers):
 def bufTypeChanged(reply, buffers):
 	# Not needed currently, implement when needed
 	print("buffer type changed")
-	# likely will have something UI-wise change
 	return True
 
 def bufLocVarAdded(reply, buffers):
@@ -138,9 +135,10 @@ def bufLocVarAdded(reply, buffers):
 	return False
 
 def bufTitleChanged(reply, buffers):
+	print("sync message: buffer title changed")
 	replyItems = reply.objects[0].value['items'][0]
 	for key,buf in buffers.items():
-		if buf.path == replyItems['buffer']:
+		if buf.path == replyItems['__path']:
 			buf.title = replyItems['title']
 	return True
 
