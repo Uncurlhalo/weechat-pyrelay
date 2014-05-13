@@ -83,6 +83,7 @@ class WeechatBuffer():
 
 	def __str__(self):
 		# TODO: The number of lines to be printed to the TTY needs to be 3 lines less than its total height, this allows the title at the top and then a status line plus the input line at the bottom
+		# TODO: Get the nick list printed next to the lines of text from buffers, similar to how it is done in the weechat interface.
 		ret = ""
 		if not self.prefixWidth:
 			self.getPrefixWidth()
