@@ -31,46 +31,90 @@ def processReply(reply, buffers):
 	return ret
 
 def pong(reply, buffers):
-	print("Ponged")
+	# Not needed currently, implement when needed
+	return False
 
 def upgrade(reply, buffers):
-	print("upgraded")
+	# Not needed currently, implement when needed
+	return True
 
 def nicklist(reply, buffers):
-	print("nicklist")
+	nicklist = objs.WeechatNickList()
+	nicksItems = reply.objects[0].value['items']
+	for key,buf in buffers.items():
+		if buf.path == nicksItems['buffers']:
+			for item in nicksItems:
+				if item['group']:
+					pass
+				else:
+					name = item['name']
+					prefix = item['prefix']
+					color = item['color']
+					visible = bool(item['visible'])
+					nicklist.addNick(objs.WeechatNick(name, prefix, color, visible))
+			buf.nicklist = nicklist
+			return True
+		else:
+			pass
+	return False
 
 def bufMoved(reply, buffers):
-	print("buffer moved")
+	# Not needed currently, implement when needed
+	return False
 
 def bufMerged(reply, buffers):
-	print("buffer merged")
+	# Not needed currently, implement when needed
+	return False
 
 def bufOpened(reply, buffers):
-	print("buffer opened")
+	# Not needed currently, implement when needed
+	return True
 
 def bufHidden(reply, buffers):
-	print("buffer hidden")
+	# Not needed currently, implement when needed
+	return False
 
 def bufClosing(reply, buffers):
-	print("buffer closing")
+	# Not needed currently, implement when needed
+	return True
 
 def bufRenamed(reply, buffers):
-	print("buffer renamed")
+	replyItems = reply.objects[0].value['items'][0]
+	for key,buf in buffers.items():
+		if buf.path == replyItems['buffer']:
+			full_name = replyItems['full_name']
+			short_name = replyItems['short_name']
+			buf.full_name = full_name
+			buf.short_name = short_name
+	return True
 
 def nicklistDiff(reply, buffers):
-	print("nicklist diff")
+	nicksItems = reply.objects[0].value['items'][0]
+	for key,buf in buffers.items():
+		if buf.path == nicksItems['buffer']:
+			for item in nicksItems:
+				if item['group']:
+					pass
+				else:
+					# TODO: figure how to find the nick already in the list and only make the changes given by the diff
+					# since the diff can just changes things like group/prefix, we shouldnt need to add a new nick, just
+					# change the values of a nick already there.
+					pass
+	return True
 
 def upgradeEnded(reply, buffers):
-	print("upgrade ended")
+	# Not needed currently, implement when needed
+	return False
 
 def bufUnmerged(reply, buffers):
-	print("buffer unmerged")
+	# Not needed currently, implement when needed
+	return False
 
 def bufUnhidden(reply, buffers):
-	print("buffer unhidden")
+	# Not needed currently, implement when needed
+	return False
 
 def bufLineAdded(reply, buffers):
-	print("buffer line added")
 	replyItems = reply.objects[0].value['items'][0]
 	for key,buf in buffers.items():
 		if buf.path == replyItems['buffer']:
@@ -79,22 +123,31 @@ def bufLineAdded(reply, buffers):
 			prefix = replyItems['prefix']
 			date = replyItems['date']
 			buf.lines.append(objs.WeechatLine(message, date, prefix, displayed))
-			return True
-	return False
+		else:
+			pass
+	return True
 
 def bufTypeChanged(reply, buffers):
+	# Not needed currently, implement when needed
 	print("buffer type changed")
+	# likely will have something UI-wise change
+	return True
 
 def bufLocVarAdded(reply, buffers):
-	print("buffer local var added")
+	# Not needed currently, implement when needed
+	return False
 
 def bufTitleChanged(reply, buffers):
-	print("buffer title changed")
+	replyItems = reply.objects[0].value['items'][0]
+	for key,buf in buffers.items():
+		if buf.path == replyItems['buffer']:
+			buf.title = replyItems['title']
 	return True
 
 def bufLocVarChanged(reply, buffers):
-	print("buffer local var changed")
+	# Not needed currently, implement when needed
 	return False
 
 def bufLocVarRemoved(reply, buffers):
-	print("buffer local var removed")
+	# Not needed currently, implement when needed
+	return False

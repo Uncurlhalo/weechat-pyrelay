@@ -13,6 +13,7 @@ class WeechatBuffer():
 		self.title = title
 		self.prefixWidth = None
 		self.nickWidth = None
+		self.MAX_NICK_WIDTH = 0
 
 	def updateLines(self, therelay):
 		lines = []
@@ -53,8 +54,17 @@ class WeechatBuffer():
 		self.prefixWidth = longest
 
 	def getNickWidth(self):
-		# TODO: implement a way to calculate nick width, this should be over-ridable so the nick column can be forced to be no wider than some max width.
-		self.nickWidth = 10
+		longest = 0
+		# if the max nick width has been set then use that as nickWidth, otherwise find the longest prefix+nick combo
+		if self.MAX_NICK_WIDTH:
+			self.nickWidth = self.MAX_NICK_WIDTH
+		else:
+			for nick in nicklist.nicks:
+				nick_val = nick.prefix + nick.name
+				length = len(nick_val)
+				if length > longest:
+					longest = length
+			self.nickWidth = longest
 
 	def __str__(self):
 		# TODO: we need to have the number of rows in the string returned by __str__ to be 3 less than height of the tty, so that we can added the title bar and input+status bars
