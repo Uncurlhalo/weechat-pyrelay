@@ -37,24 +37,26 @@ def upgrade(reply, buffers):
 	return False
 
 def nicklist(reply, buffers):
-	print("sync message: nicklist")
+	# currently broken
+	"""
 	nicklist = objs.WeechatNickList()
 	nicksItems = reply.objects[0].value['items']
 	for key,buf in buffers.items():
-		if buf.path == nicksItems['buffers']:
-			for item in nicksItems:
-				if item['group']:
-					pass
-				else:
-					name = item['name']
-					prefix = item['prefix']
-					color = item['color']
-					visible = bool(item['visible'])
-					nicklist.addNick(objs.WeechatNick(name, prefix, color, visible))
-			buf.nicklist = nicklist
-		else:
-			pass
+		print(nicksItems)
+		print(buf.path)
+		for item in nicksItems:
+			if item['group']:
+				pass
+			else:
+				name = item['name']
+				prefix = item['prefix']
+				color = item['color']
+				visible = bool(item['visible'])
+				nicklist.addNick(objs.WeechatNick(name, prefix, color, visible))
+		buf.nicklist = nicklist
 	return True
+	"""
+	return False
 
 def bufMoved(reply, buffers):
 	# Not needed currently, implement when needed
@@ -65,25 +67,22 @@ def bufMerged(reply, buffers):
 	return False
 
 def bufOpened(reply, buffers):
-	print("sync message: buffer opened")
 	replyItems = reply.objects[0].value['items'][0]
 	full_name = replyItems['full_name']
 	short_name = replyItems['short_name']
 	path = replyItems['__path'][0]
 	title = replyItems['title']
 	buffers[full_name] = objs.WeechatBuffer(path, full_name, short_name, title)
-	return True
+	return False
 
 def bufHidden(reply, buffers):
 	# Not needed currently, implement when needed
 	return False
 
 def bufClosing(reply, buffers):
-	print("sync message: buffer closing")
 	return True
 
 def bufRenamed(reply, buffers):
-	print("sync message: buffer renamed")
 	replyItems = reply.objects[0].value['items'][0]
 	for key,buf in buffers.items():
 		if buf.path == replyItems['__path']:
@@ -100,7 +99,7 @@ def nicklistDiff(reply, buffers):
 	return False
 
 def upgradeEnded(reply, buffers):
-
+	# Not needed currently, implement when needed
 	return False
 
 def bufUnmerged(reply, buffers):
@@ -127,7 +126,6 @@ def bufLineAdded(reply, buffers):
 
 def bufTypeChanged(reply, buffers):
 	# Not needed currently, implement when needed
-	print("buffer type changed")
 	return True
 
 def bufLocVarAdded(reply, buffers):
@@ -135,7 +133,6 @@ def bufLocVarAdded(reply, buffers):
 	return False
 
 def bufTitleChanged(reply, buffers):
-	print("sync message: buffer title changed")
 	replyItems = reply.objects[0].value['items'][0]
 	for key,buf in buffers.items():
 		if buf.path == replyItems['__path']:

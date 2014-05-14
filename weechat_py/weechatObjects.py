@@ -37,6 +37,7 @@ class WeechatBuffer():
 		return True
 
 	def addLine(self, message, prefix="   "):
+		#
 		self.lines.append(WeechatLine(message, int(time.time()), prefix, True))
 
 	def updateNicks(self):
@@ -90,7 +91,13 @@ class WeechatBuffer():
 		#if not self.nickWidth:
 		#	self.getNickWidth()
 		rows, columns = os.popen('stty size', 'r').read().split()
-		for line in self.lines:
+		rows = int(rows)
+		i = 0
+		if len(self.lines) > (rows - 3):
+			tempLines = self.lines[len(self.lines) - (rows - 3):]
+		else:
+			tempLines = self.lines
+		for line in tempLines:
 			dt = datetime.datetime.fromtimestamp(line.date)
 			if self.short_name and len(self.lines): 
 				prefix_str = "{0} {1} {2}{3}".format(dt.strftime('%X'), self.short_name.rjust(len(self.short_name)), color.remove(line.prefix).rjust(self.prefixWidth), " | ")
@@ -116,6 +123,10 @@ class WeechatBuffer():
 				ret += '\n'
 			elif len(self.lines):
 				ret += "{0}\n".format(color.remove(line.message))
+			i += 1
+		while (i < rows - 3):
+			i += 1
+			ret += '\n'
 		return ret
 
 class WeechatLine():

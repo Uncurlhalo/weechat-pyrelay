@@ -60,10 +60,9 @@ class UIHandler(threading.Thread):
                     status_line = (" "[:columns]).ljust(columns)
                 status_line = '\033[1;44m' + status_line + '\033[0m'
                 print(status_line)
+                print("input> ", end="")
                 updateUI -= 1
                 self.lock.release()
-            
-                
 
 has_quit = False
 
@@ -117,7 +116,7 @@ ui_Thread.start()
 while not has_quit:
     while updateUI:
         pass
-    message = input("input> ")
+    message = input("")
     if '/close' in message.split():
         if current_buffer == 'client.menu':
             has_quit = True
@@ -131,22 +130,21 @@ while not has_quit:
         buffers['client.menu'].addLine(" Type /open and a buffer number to open that remote buffer and begin sending messages to it")
         buffers['client.menu'].addLine(" Type /locbuffers to get a list of the buffers available to the client")
         buffers['client.menu'].addLine(" Type /quit to exit the program (Note: currently broken, only exits main thread. Must ctrl^c to fully exit)")
-        if current_buffer == 'client.menu':
-            updateUI += 1
+        if current_buffer == 'core.weechat':
+            myRelay.send('input {0} {1}'.format(buffers[current_buffer].path, message))
+        updateUI += 1
     elif '/locbuffers' in message.split():
         buffers['client.menu'].addLine("Available buffers:", "=!=")
         for key in buffers.keys():
             buffers['client.menu'].addLine("   > " + key)
-        if current_buffer == 'client.menu':
-            updateUI += 1
+        updateUI += 1
     elif '/open' in message.split():
         new_buf = message.split()[1]
         if new_buf in buffers.keys():
             current_buffer = new_buf
-            updateUI += 1
         else:
             buffers['client.menu'].addLine("Invalid buffer, please enter a valid buffer name")
-            updateUI += 1
+        updateUI += 1
     elif '/debug' in message.split():
         print("current buffer = " + current_buffer)
     else:
@@ -154,7 +152,7 @@ while not has_quit:
             pass
         elif message:
             myRelay.send('input {0} {1}'.format(buffers[current_buffer].path, message))
-            updateUI += 1
+        updateUI += 1
 
 # TODO: fix the closing of all child threads when the has_quit condition goes True. This should be functional as the has_quit condition determines whether or not the children keep looping looking for updates
 network_Thread.join()
